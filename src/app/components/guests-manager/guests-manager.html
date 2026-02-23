@@ -1,0 +1,139 @@
+<div class="guests-manager">
+  
+  <!-- Estatísticas -->
+  @if (guests().length > 0) {
+    <div class="guests-stats">
+      <div class="stat">
+        <span class="stat-number">{{ stats().total }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number stat-confirmed">{{ stats().confirmed }}</span>
+        <span class="stat-label">Confirmados</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number stat-pending">{{ stats().pending }}</span>
+        <span class="stat-label">Pendentes</span>
+      </div>
+      @if (stats().declined > 0) {
+        <div class="stat">
+          <span class="stat-number stat-declined">{{ stats().declined }}</span>
+          <span class="stat-label">Recusaram</span>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Adicionar convidado -->
+  <div class="add-guest-section">
+    <div class="form-row">
+      <input 
+        type="text" 
+        [(ngModel)]="newGuestName"
+        placeholder="Nome completo"
+        class="input-field"
+        (keyup.enter)="addGuest()" />
+      
+      <input 
+        type="tel" 
+        [(ngModel)]="newGuestPhone"
+        placeholder="(XX) XXXXX-XXXX"
+        class="input-field"
+        (keyup.enter)="addGuest()" />
+    </div>
+    
+    <div class="form-actions">
+      <button class="btn btn-primary btn-add" (click)="addGuest()">
+        Adicionar
+      </button>
+      
+      <button class="btn btn-secondary btn-import" (click)="showImportForm.set(!showImportForm())">
+        {{ showImportForm() ? 'Fechar' : 'Importar lista' }}
+      </button>
+    </div>
+
+    @if (showImportForm()) {
+      <div class="import-form">
+        <p class="import-hint">Cole a lista no formato: <code>Nome, Telefone</code> (um por linha)</p>
+        <textarea 
+          [(ngModel)]="bulkImportText"
+          placeholder="João Silva, 11999998888&#10;Maria Santos, 11988887777&#10;Pedro Costa, 11977776666"
+          rows="6"
+          class="import-textarea"></textarea>
+        <button class="btn btn-primary" (click)="importBulk()" [disabled]="!bulkImportText().trim()">
+          Importar {{ importLinesCount() }} convidados
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Lista de convidados -->
+  @if (isLoading()) {
+    <div class="loading">Carregando convidados...</div>
+  } @else if (guests().length === 0) {
+    <div class="empty-state">
+      <span class="empty-icon">👥</span>
+      <p>Nenhum convidado adicionado ainda</p>
+      <p class="empty-hint">Adicione convidados para enviar convites personalizados</p>
+    </div>
+  } @else {
+    <div class="guests-header">
+      <h3>Convidados ({{ guests().length }})</h3>
+      @if (stats().pending > 0) {
+        <button class="btn btn-primary btn-send-all" (click)="sendToAll()">
+          Enviar para {{ stats().pending }} pendente{{ stats().pending > 1 ? 's' : '' }}
+        </button>
+      }
+    </div>
+
+    <div class="guests-list">
+      @for (guest of guests(); track guest.id) {
+        <div class="guest-card" [class]="getStatusClass(guest.status)">
+          <div class="guest-info">
+            <span class="guest-name">{{ guest.name }}</span>
+            <span class="guest-phone">{{ formatPhone(guest.phone) }}</span>
+            <span class="guest-status-badge" [class]="getStatusClass(guest.status)">
+              {{ getStatusLabel(guest.status) }}
+            </span>
+            
+            @if (guest.confirmedAt) {
+              <span class="guest-meta">
+                {{ guest.confirmedAt | date:'dd/MM HH:mm' }}
+                @if (guest.adults || guest.children) {
+                  · {{ guest.adults || 0 }} adulto(s), {{ guest.children || 0 }} criança(s)
+                }
+              </span>
+            } @else if (guest.sentAt) {
+              <span class="guest-meta">
+                Enviado · {{ guest.sentAt | date:'dd/MM HH:mm' }}
+              </span>
+            }
+          </div>
+          
+          <div class="guest-actions">
+            <button 
+              class="btn btn-sm btn-whatsapp" 
+              (click)="sendWhatsApp(guest)"
+              title="Enviar pelo WhatsApp">
+              WhatsApp
+            </button>
+            
+            <button 
+              class="btn btn-sm btn-ghost" 
+              (click)="copyLink(guest)"
+              title="Copiar link">
+              {{ linkCopied() === guest.id ? '✓' : 'Link' }}
+            </button>
+            
+            <button 
+              class="btn btn-sm btn-ghost btn-danger" 
+              (click)="deleteGuest(guest.id!, guest.name)"
+              title="Remover">
+              ✕
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -164,6 +164,23 @@
           }
         </div>
 
+        <!-- Seção: Convidados -->
+        <div class="accordion-item" [class.open]="activeSection() === 'guests'">
+          <button class="accordion-header" (click)="activeSection.set('guests')">
+            <span class="acc-icon">👥</span>
+            <span class="acc-title">Lista de Convidados</span>
+            <span class="acc-arrow">{{ activeSection() === 'guests' ? '▲' : '▼' }}</span>
+          </button>
+          @if (activeSection() === 'guests') {
+            <div class="accordion-body accordion-body-guests">
+              <app-guests-manager 
+                [cardId]="card()?.id ?? ''"
+                [cardTitle]="card()?.title ?? ''"
+                [senderName]="card()?.senderName ?? ''" />
+            </div>
+          }
+        </div>
+
         <!-- Botão salvar (mobile) -->
         <div class="save-mobile">
           <button

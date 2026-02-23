@@ -7,12 +7,13 @@ import { Card, CardTheme, ColorScheme } from '../../models/card.model';
 import { THEMES, COLOR_SCHEMES, NO_BUTTON_MECHANICS } from '../../models/constants';
 import { ThemeSelector } from '../theme-selector/theme-selector';
 import { ColorScheme as ColorSchemeComponent } from '../color-scheme/color-scheme';
+import { GuestsManager } from '../guests-manager/guests-manager';
 
-type EditSection = 'text' | 'theme' | 'colors' | 'mechanic' | 'emoji';
+type EditSection = 'text' | 'theme' | 'colors' | 'mechanic' | 'emoji' | 'guests';
 
 @Component({
   selector: 'app-invite-manager',
-  imports: [FormsModule, ThemeSelector, ColorSchemeComponent],
+  imports: [FormsModule, ThemeSelector, ColorSchemeComponent, GuestsManager],
   templateUrl: './invite-manager.html',
   styleUrl: './invite-manager.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,6 +83,12 @@ export class InviteManager implements OnInit {
     if (!cardId) {
       this.router.navigate(['/dashboard']);
       return;
+    }
+
+    // Check if should open guests section
+    const section = this.route.snapshot.queryParamMap.get('section');
+    if (section === 'guests') {
+      this.activeSection.set('guests');
     }
 
     const cached = this.cardService.getCard(cardId);

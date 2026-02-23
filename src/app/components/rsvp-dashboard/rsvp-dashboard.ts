@@ -81,6 +81,10 @@ export class RsvpDashboard implements OnInit, OnDestroy {
     this.router.navigate(['/manage', cardId]);
   }
 
+  manageGuests(cardId: string): void {
+    this.router.navigate(['/manage', cardId], { queryParams: { section: 'guests' } });
+  }
+
   deleteCard(cardId: string): void {
     this.confirmDeleteId.set(cardId);
   }

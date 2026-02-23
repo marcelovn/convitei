@@ -256,6 +256,25 @@
       background: #1e3a8a;
     }
   }
+  
+  .btn-guests {
+    background: #6366f1;
+    color: #fff;
+    font-weight: 600;
+    flex: 1.7 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+
+    &:hover {
+      background: #4f46e5;
+    }
+    
+    .btn-icon {
+      font-size: 0.9rem;
+    }
+  }
 }
 
 .btn-danger {

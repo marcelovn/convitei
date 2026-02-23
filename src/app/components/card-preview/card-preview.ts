@@ -7,7 +7,9 @@ import { ThemeService } from '../../services/theme';
 import { RsvpService } from '../../services/rsvp';
 import { AuthService } from '../../services/auth';
 import { InviteTokenService } from '../../services/invite-token';
+import { GuestService } from '../../services/guest.service';
 import { Card } from '../../models/card.model';
+import { Guest } from '../../models/guest.model';
 import { THEMES, COLOR_SCHEMES } from '../../models/constants';
 
 @Component({
@@ -25,9 +27,11 @@ export class CardPreview implements OnInit {
   private themeService = inject(ThemeService);
   private rsvpService = inject(RsvpService);
   private inviteTokenService = inject(InviteTokenService);
+  private guestService = inject(GuestService);
   public authService = inject(AuthService);
 
   card = signal<Card | null>(null);
+  guest = signal<Guest | null>(null);
   isLoading = signal(false);
   isLiveInvite = signal(false);
   linkCopied = signal(false);
@@ -79,22 +83,62 @@ export class CardPreview implements OnInit {
       this.isViewMode.set(true);
     }
 
-    // Se um token foi fornecido, armazená-lo e validar seu status
+    // Se um token foi fornecido, verificar se é token de convidado ou token de convite
     if (token) {
       this.inviteToken.set(token);
-      // Validar status do token ao carregar
-      this.inviteTokenService.checkTokenStatus(token).then(status => {
-        if (status.alreadyUsed) {
-          this.tokenValid.set(false);
-          this.errorMessage.set('Este convite já foi confirmado');
-        } else if (status.expired) {
-          this.tokenValid.set(false);
-          this.errorMessage.set('Este convite expirou');
+      this.isLoading.set(true);
+      
+      // Tentar buscar convidado por token primeiro
+      this.guestService.getGuestByToken(token).then(guest => {
+        if (guest) {
+          // É um token de convidado
+          this.guest.set(guest);
+          
+          // Marcar como visualizado
+          if (guest.status === 'pending' || guest.status === 'sent') {
+            this.guestService.markAsViewed(guest.id!);
+          }
+          
+          // Verificar se já confirmou
+          if (guest.status === 'confirmed' || guest.status === 'declined') {
+            this.tokenValid.set(false);
+            this.errorMessage.set(guest.status === 'confirmed' 
+              ? 'Você já confirmou sua presença!'
+              : 'Você já respondeu a este convite.');
+          }
+          
+          // Carregar o card
+          return this.cardService.getCardFromDb(guest.cardId);
+        } else {
+          // Tentar como token de convite (sistema antigo)
+          return this.inviteTokenService.checkTokenStatus(token).then(status => {
+            if (status.alreadyUsed) {
+              this.tokenValid.set(false);
+              this.errorMessage.set('Este convite já foi confirmado');
+            } else if (status.expired) {
+              this.tokenValid.set(false);
+              this.errorMessage.set('Este convite expirou');
+            }
+            return null;
+          });
         }
+      }).then(dbCard => {
+        if (dbCard) {
+          this.card.set(dbCard);
+          this.isLiveInvite.set(true);
+          this.applyCardStyle(dbCard);
+          this.autoPlayAudio();
+        }
+        this.isLoading.set(false);
       }).catch(err => {
+        console.error('Erro ao validar token:', err);
         this.tokenValid.set(false);
         this.errorMessage.set('Erro ao validar convite');
+        this.isLoading.set(false);
       });
+      
+      // Se token foi fornecido, não continuar com o resto da lógica
+      return;
     }
 
     if (cardId) {
@@ -166,9 +210,20 @@ export class CardPreview implements OnInit {
     
     const cardData = this.card();
     const token = this.inviteToken();
+    const currentGuest = this.guest();
 
     if (cardData?.id) {
-      if (token) {
+      // Se é um convidado individual, registrar via GuestService
+      if (currentGuest?.id) {
+        this.guestService.recordResponse(currentGuest.id, response).then(() => {
+          this.showSuccessMessage();
+        }).catch(error => {
+          this.errorMessage.set('Erro: ' + (error.message || 'Não foi possível registrar sua resposta'));
+          this.tokenValid.set(false);
+        });
+      }
+      // Token de convite antigo (sem convidado)
+      else if (token) {
         this.rsvpService.addResponseViaToken(token, {
           cardId: cardData.id,
           response,
@@ -178,7 +233,9 @@ export class CardPreview implements OnInit {
           this.errorMessage.set('Erro: ' + (error.message || 'Não foi possível registrar sua resposta'));
           this.tokenValid.set(false);
         });
-      } else {
+      }
+      // Sem token (preview mode)
+      else {
         this.rsvpService.addResponse({
           cardId: cardData.id,
           response,
