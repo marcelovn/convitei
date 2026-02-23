@@ -107,7 +107,7 @@
             <div class="card-dropdown-menu">
               <button class="dropdown-item" (click)="copyLink(card.id!); closeMenu()">
                 <span class="dropdown-icon">🔗</span>
-                {{ linkCopied() === card.id ? '✓ Link copiado' : 'Copiar link' }}
+                {{ linkCopied() ? '✓ Link copiado' : 'Copiar link' }}
               </button>
               <button class="dropdown-item dropdown-warning" (click)="clearResponses(card.id!); closeMenu()">
                 <span class="dropdown-icon">↺</span>
@@ -140,9 +140,39 @@
 
           <div class="card-actions">
             <button class="btn btn-primary btn-edit" (click)="editCard(card.id!)">Editar</button>
-            <button class="btn btn-secondary btn-guests" (click)="manageGuests(card.id!)">
-              <span class="btn-icon">👥</span> Convidados
-            </button>
+            <div class="btn-guests-wrapper">
+              <button 
+                class="btn btn-secondary btn-guests" 
+                (click)="manageGuests(card.id!)"
+                (mouseenter)="showGuestPopover(card.id!)"
+                (mouseleave)="hideGuestPopover()">
+                <span class="btn-icon">👥</span> Convidados
+              </button>
+              @if (guestPopoverbCardId() === card.id) {
+                <div class="guest-popover" (mouseleave)="hideGuestPopover()">
+                  @if (guestPopoverLoading()) {
+                    <div class="popover-loading">Carregando...</div>
+                  } @else if (guestPopoverList().length === 0) {
+                    <div class="popover-empty">Nenhum convidado</div>
+                  } @else {
+                    <div class="popover-header">
+                      <h4>{{ guestPopoverList().length }} convidado(s)</h4>
+                    </div>
+                    <div class="popover-guests">
+                      @for (guest of guestPopoverList(); track guest.id) {
+                        <div class="popover-guest-item" [class]="getGuestStatusClass(guest.status)">
+                          <div class="popover-guest-name">{{ guest.name }}</div>
+                          <div class="popover-guest-status">{{ getGuestStatusLabel(guest.status) }}</div>
+                          @if (guest.adults || guest.children) {
+                            <div class="popover-guest-meta">{{ guest.adults || 0 }}A, {{ guest.children || 0 }}C</div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
             <button class="btn btn-ghost" (click)="viewCard(card.id!)">Ver</button>
             <button class="btn btn-ghost btn-whatsapp-sm" (click)="shareWhatsApp(card)">WhatsApp</button>
           </div>

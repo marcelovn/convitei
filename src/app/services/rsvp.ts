@@ -11,6 +11,7 @@ export class RsvpService {
   private entries: RSVPEntry[] = [];
   readonly rsvpEntries = signal<RSVPEntry[]>([]);
   private hasLoaded = false;
+  private guestCache: Map<string, any[]> = new Map(); // Cache de guests por cardId
 
   constructor(
     private supabaseService: SupabaseService,
@@ -77,17 +78,27 @@ export class RsvpService {
   }
 
   getStats(cardId: string): RSVPStats {
+    // Conta de rsvp_entries
     const cardEntries = this.entries.filter(e => e.cardId === cardId);
-    const yes = cardEntries.filter(e => e.response === 'yes').length;
-    const no = cardEntries.filter(e => e.response === 'no').length;
-    const total = cardEntries.length;
+    const rsvpYes = cardEntries.filter(e => e.response === 'yes').length;
+    const rsvpNo = cardEntries.filter(e => e.response === 'no').length;
+
+    // Conta de guests confirmados (se estiver em cache)
+    const guests = this.guestCache.get(cardId) || [];
+    const guestYes = guests.filter((g: any) => g.response === 'yes' || g.status === 'confirmed').length;
+    const guestNo = guests.filter((g: any) => g.response === 'no' || g.status === 'declined').length;
+
+    // Combina os dois
+    const totalYes = rsvpYes + guestYes;
+    const totalNo = rsvpNo + guestNo;
+    const total = totalYes + totalNo;
 
     return {
       cardId,
       total,
-      yes,
-      no,
-      percentageYes: total > 0 ? Math.round((yes / total) * 100) : 0,
+      yes: totalYes,
+      no: totalNo,
+      percentageYes: total > 0 ? Math.round((totalYes / total) * 100) : 0,
     };
   }
 
@@ -113,6 +124,36 @@ export class RsvpService {
     } catch (error) {
       console.error('Erro ao limpar respostas:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Recarrega as respostas RSVP do Supabase (útil quando dados foram atualizados externamente)
+   */
+  async reloadFromSupabase(): Promise<void> {
+    this.guestCache.clear(); // Limpa cache de guests
+    await this.loadFromSupabase();
+  }
+
+  /**
+   * Pré-carrega guests de múltiplos cards para cache
+   */
+  async preloadGuestStats(cardIds: string[]): Promise<void> {
+    for (const cardId of cardIds) {
+      if (!this.guestCache.has(cardId)) {
+        try {
+          const { data, error } = await this.supabaseService.getClient()
+            .from('guests')
+            .select('id, status, response')
+            .eq('card_id', cardId);
+
+          if (!error && data) {
+            this.guestCache.set(cardId, data);
+          }
+        } catch (error) {
+          console.error(`Erro ao carregar guests para card ${cardId}:`, error);
+        }
+      }
     }
   }
 

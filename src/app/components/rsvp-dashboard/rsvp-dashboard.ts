@@ -5,7 +5,9 @@ import { CardService } from '../../services/card';
 import { RsvpService } from '../../services/rsvp';
 import { AuthService } from '../../services/auth';
 import { InviteTokenService } from '../../services/invite-token';
+import { GuestService } from '../../services/guest.service';
 import { Card, RSVPStats } from '../../models/card.model';
+import { Guest } from '../../models/guest.model';
 import { Subscription } from 'rxjs';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 
@@ -20,15 +22,20 @@ export class RsvpDashboard implements OnInit, OnDestroy {
   private rsvpService = inject(RsvpService);
   private router = inject(Router);
   private inviteTokenService = inject(InviteTokenService);
+  private guestService = inject(GuestService);
   public authService = inject(AuthService);
 
   cards = signal<Card[]>([]);
   statsMap = signal<Map<string, RSVPStats>>(new Map());
-  linkCopied = signal<string | null>(null);
+  linkCopied = signal(false);
   confirmDeleteId = signal<string | null>(null);
   confirmClearId = signal<string | null>(null);
   isLoading = computed(() => !this.cardService.hasLoaded());
   openMenuId = signal<string | null>(null);
+  guestPopoverbCardId = signal<string | null>(null);
+  guestPopoverList = signal<Guest[]>([]);
+  guestPopoverLoading = signal(false);
+  private guestCache = new Map<string, Guest[]>();
   
   private subscriptions: Subscription[] = [];
 
@@ -45,6 +52,10 @@ export class RsvpDashboard implements OnInit, OnDestroy {
     const cardsSub = this.cardService.cards$.subscribe(cards => {
       this.cards.set(cards);
       this.updateStatsMap();
+      // Pré-carrega guest stats para todos os cards
+      if (cards.length > 0) {
+        this.rsvpService.preloadGuestStats(cards.map(c => c.id!).filter(Boolean));
+      }
     });
     this.subscriptions.push(cardsSub);
   }
@@ -131,17 +142,46 @@ export class RsvpDashboard implements OnInit, OnDestroy {
   copyLink(cardId: string): void {
     this.inviteTokenService.generateToken(cardId).then(token => {
       const link = `${window.location.origin}/invite/${cardId}/${token}`;
-      navigator.clipboard.writeText(link);
-      this.linkCopied.set(cardId);
-      setTimeout(() => this.linkCopied.set(null), 2000);
+      this.copyToClipboard(link);
     }).catch(error => {
       console.error('Erro ao gerar token:', error);
       // Fallback sem token
       const link = `${window.location.origin}/invite/${cardId}`;
-      navigator.clipboard.writeText(link);
-      this.linkCopied.set(cardId);
-      setTimeout(() => this.linkCopied.set(null), 2000);
+      this.copyToClipboard(link);
     });
+  }
+
+  private copyToClipboard(text: string): void {
+    // Tenta a API moderna primeiro
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.linkCopied.set(true);
+        setTimeout(() => this.linkCopied.set(false), 2000);
+      }).catch(() => {
+        // Se falha, usa fallback
+        this.copyToClipboardFallback(text);
+      });
+    } else {
+      // Fallback para navegadores antigos
+      this.copyToClipboardFallback(text);
+    }
+  }
+
+  private copyToClipboardFallback(text: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      this.linkCopied.set(true);
+      setTimeout(() => this.linkCopied.set(false), 2000);
+    } catch (error) {
+      console.error('Erro ao copiar:', error);
+    }
+    document.body.removeChild(textarea);
   }
 
   shareWhatsApp(card: Card): void {
@@ -179,6 +219,45 @@ export class RsvpDashboard implements OnInit, OnDestroy {
     const totalResponses = allStats.reduce((sum, s) => sum + s.total, 0);
     
     return totalResponses > 0 ? Math.round((totalYes / totalResponses) * 100) : 0;
+  }
+
+  async showGuestPopover(cardId: string): Promise<void> {
+    if (this.guestPopoverbCardId() === cardId) return;
+    this.guestPopoverbCardId.set(cardId);
+    if (this.guestCache.has(cardId)) {
+      this.guestPopoverList.set(this.guestCache.get(cardId)!);
+      return;
+    }
+    this.guestPopoverLoading.set(true);
+    try {
+      const guests = await this.guestService.loadGuestsByCard(cardId);
+      this.guestCache.set(cardId, guests);
+      this.guestPopoverList.set(guests);
+    } catch (error) {
+      console.error('Erro ao carregar convidados:', error);
+      this.guestPopoverList.set([]);
+    } finally {
+      this.guestPopoverLoading.set(false);
+    }
+  }
+
+  hideGuestPopover(): void {
+    this.guestPopoverbCardId.set(null);
+  }
+
+  getGuestStatusLabel(status: string): string {
+    const labels: { [key: string]: string } = {
+      'pending': 'Pendente',
+      'sent': 'Enviado',
+      'viewed': 'Visualizado',
+      'confirmed': 'Confirmado',
+      'declined': 'Recusado'
+    };
+    return labels[status] || status;
+  }
+
+  getGuestStatusClass(status: string): string {
+    return `status-${status}`;
   }
 
   async logout(): Promise<void> {

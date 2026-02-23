@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Guest, GuestStats } from '../models/guest.model';
 import { SupabaseService } from './supabase';
 import { AuthService } from './auth';
+import { RsvpService } from './rsvp';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,8 @@ export class GuestService {
 
   constructor(
     private supabaseService: SupabaseService,
-    private authService: AuthService
+    private authService: AuthService,
+    private rsvpService: RsvpService
   ) {}
 
   /**
@@ -148,6 +150,9 @@ export class GuestService {
       this.guests[index] = { ...this.guests[index], status, ...updates };
       this.guestsSignal.set([...this.guests]);
     }
+
+    // Recarregar estatísticas no RsvpService
+    await this.rsvpService.reloadFromSupabase();
   }
 
   /**
