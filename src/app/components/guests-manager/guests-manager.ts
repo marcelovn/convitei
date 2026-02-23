@@ -20,7 +20,7 @@ export class GuestsManager implements OnInit {
   
   guests = signal<Guest[]>([]);
   stats = signal<GuestStats>({ total: 0, sent: 0, viewed: 0, confirmed: 0, declined: 0, pending: 0 });
-  isLoading = signal(false);
+  isLoading = signal(true);
   
   newGuestName = signal('');
   newGuestPhone = signal('');

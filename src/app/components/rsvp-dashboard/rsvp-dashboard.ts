@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy, effect, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, effect, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe, CommonModule } from '@angular/common';
 import { CardService } from '../../services/card';
@@ -27,7 +27,7 @@ export class RsvpDashboard implements OnInit, OnDestroy {
   linkCopied = signal<string | null>(null);
   confirmDeleteId = signal<string | null>(null);
   confirmClearId = signal<string | null>(null);
-  isLoading = signal(true);
+  isLoading = computed(() => !this.cardService.hasLoaded());
   openMenuId = signal<string | null>(null);
   
   private subscriptions: Subscription[] = [];
@@ -45,7 +45,6 @@ export class RsvpDashboard implements OnInit, OnDestroy {
     const cardsSub = this.cardService.cards$.subscribe(cards => {
       this.cards.set(cards);
       this.updateStatsMap();
-      this.isLoading.set(false);
     });
     this.subscriptions.push(cardsSub);
   }

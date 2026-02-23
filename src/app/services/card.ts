@@ -1,4 +1,4 @@
-import { Injectable, effect } from '@angular/core';
+import { Injectable, effect, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Card } from '../models/card.model';
 import { SupabaseService } from './supabase';
@@ -12,6 +12,7 @@ export class CardService {
   private cards: Card[] = [];
   private cardsSubject = new BehaviorSubject<Card[]>([]);
   public cards$ = this.cardsSubject.asObservable();
+  public hasLoaded = signal(false);
 
   private currentCard = new BehaviorSubject<Card | null>(null);
   public currentCard$ = this.currentCard.asObservable();
@@ -313,8 +314,10 @@ export class CardService {
       }));
 
       this.cardsSubject.next([...this.cards]);
+      this.hasLoaded.set(true);
     } catch (error) {
       console.error('Erro ao carregar cartões:', error);
+      this.hasLoaded.set(true);
     }
   }
 }
