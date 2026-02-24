@@ -21,42 +21,15 @@
 }
 
 <div class="dashboard-container animate-fade-in">
-  <!-- Perfil -->
-  <section class="profile-section">
-    @if (isLoading()) {
-      <div class="profile-card card-base">
-        <div class="profile-header">
-          <div class="profile-info">
-            <div class="skeleton-text-lg" style="width: 55%; margin-bottom: 0.4rem"></div>
-            <div class="skeleton-text-sm" style="width: 40%"></div>
-          </div>
-          <div class="skeleton-btn" style="width: 70px"></div>
-          <div class="skeleton-btn" style="width: 50px"></div>
-        </div>
-      </div>
-    } @else {
-      <div class="profile-card card-base">
-        <div class="profile-header">
-          <div class="profile-info">
-            <h2>Olá, {{ getUserName() }}</h2>
-            <p>{{ authService.currentUser()?.email }}</p>
-          </div>
-          <span class="profile-badge">{{ cards().length }} {{ cards().length === 1 ? 'convite' : 'convites' }}</span>
-          <button class="btn btn-danger" (click)="logout()">Sair</button>
-        </div>
-      </div>
-    }
-  </section>
-
-  <!-- Convites -->
   <header class="dashboard-header">
-    <div>
+    <div class="dashboard-title-wrap">
       <h1>Meus convites</h1>
-      <p class="invite-unique-note">
-        Cada convite tem um link único para enviar ao cliente. Ao cliente clicar no site, o convite expira.
-      </p>
+      <p class="invite-unique-note">{{ cards().length }} {{ cards().length === 1 ? 'convite' : 'convites' }}</p>
     </div>
-    <button class="btn btn-primary" (click)="createNew()">Novo convite</button>
+    <div class="dashboard-header-actions">
+      <button class="btn btn-ghost" (click)="logout()">Sair</button>
+      <button class="btn btn-primary" (click)="createNew()">Novo convite</button>
+    </div>
   </header>
 
   @if (isLoading()) {
@@ -127,10 +100,6 @@
             </span>
           </div>
 
-          <div class="card-info">
-            <p><strong>Enviado por:</strong> {{ card.senderName }}</p>
-          </div>
-
           <div class="stats-bar">
             <div class="stat">
               <span class="stat-number stat-yes">{{ stats.yes }}</span>
@@ -139,14 +108,14 @@
           </div>
 
           <div class="card-actions">
-            <button class="btn btn-primary btn-edit" (click)="editCard(card.id!)">Editar</button>
+            <button class="btn btn-ghost" (click)="editCard(card.id!)">Editar</button>
             <div class="btn-guests-wrapper">
               <button 
-                class="btn btn-secondary btn-guests" 
+                class="btn btn-ghost btn-guests" 
                 (click)="manageGuests(card.id!)"
                 (mouseenter)="showGuestPopover(card.id!)"
                 (mouseleave)="hideGuestPopover()">
-                <span class="btn-icon">👥</span> Convidados
+                Convidados
               </button>
               @if (guestPopoverbCardId() === card.id) {
                 <div class="guest-popover" (mouseleave)="hideGuestPopover()">
