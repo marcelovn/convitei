@@ -27,7 +27,7 @@ export class RsvpDashboard implements OnInit, OnDestroy {
 
   cards = signal<Card[]>([]);
   statsMap = signal<Map<string, RSVPStats>>(new Map());
-  linkCopied = signal(false);
+  linkCopied = signal<string | null>(null);
   confirmDeleteId = signal<string | null>(null);
   confirmClearId = signal<string | null>(null);
   isLoading = computed(() => !this.cardService.hasLoaded());
@@ -36,7 +36,7 @@ export class RsvpDashboard implements OnInit, OnDestroy {
   guestPopoverList = signal<Guest[]>([]);
   guestPopoverLoading = signal(false);
   private guestCache = new Map<string, Guest[]>();
-  
+
   private subscriptions: Subscription[] = [];
 
   constructor() {
@@ -48,10 +48,10 @@ export class RsvpDashboard implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Subscribe to cards updates
     const cardsSub = this.cardService.cards$.subscribe(cards => {
       this.cards.set(cards);
       this.updateStatsMap();
+
       // Pré-carrega guest stats para todos os cards
       if (cards.length > 0) {
         this.rsvpService.preloadGuestStats(cards.map(c => c.id!).filter(Boolean));
@@ -143,31 +143,31 @@ export class RsvpDashboard implements OnInit, OnDestroy {
     // Gera um token único para garantir que o link seja de uso único
     this.inviteTokenService.generateToken(cardId).then(token => {
       const link = `${window.location.origin}/invite/${cardId}/${token}`;
-      this.copyToClipboard(link);
+      this.copyToClipboard(link, cardId);
     }).catch(() => {
       // Fallback sem token caso a geração falhe
       const link = `${window.location.origin}/invite/${cardId}`;
-      this.copyToClipboard(link);
+      this.copyToClipboard(link, cardId);
     });
   }
 
-  private copyToClipboard(text: string): void {
+  private copyToClipboard(text: string, cardId: string): void {
     // Tenta a API moderna primeiro
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
-        this.linkCopied.set(true);
-        setTimeout(() => this.linkCopied.set(false), 2000);
+        this.linkCopied.set(cardId);
+        setTimeout(() => this.linkCopied.set(null), 2000);
       }).catch(() => {
         // Se falha, usa fallback
-        this.copyToClipboardFallback(text);
+        this.copyToClipboardFallback(text, cardId);
       });
     } else {
       // Fallback para navegadores antigos
-      this.copyToClipboardFallback(text);
+      this.copyToClipboardFallback(text, cardId);
     }
   }
 
-  private copyToClipboardFallback(text: string): void {
+  private copyToClipboardFallback(text: string, cardId: string): void {
     const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed';
@@ -176,8 +176,8 @@ export class RsvpDashboard implements OnInit, OnDestroy {
     textarea.select();
     try {
       document.execCommand('copy');
-      this.linkCopied.set(true);
-      setTimeout(() => this.linkCopied.set(false), 2000);
+      this.linkCopied.set(cardId);
+      setTimeout(() => this.linkCopied.set(null), 2000);
     } catch (error) {
       console.error('Erro ao copiar:', error);
     }

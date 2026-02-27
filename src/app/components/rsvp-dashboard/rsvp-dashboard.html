@@ -80,7 +80,7 @@
             <div class="card-dropdown-menu">
               <button class="dropdown-item" (click)="copyLink(card.id!); closeMenu()">
                 <span class="dropdown-icon">🔗</span>
-                {{ linkCopied() ? '✓ Link copiado' : 'Copiar link' }}
+                {{ linkCopied() === card.id ? '✓ Link copiado' : 'Copiar link' }}
               </button>
               <button class="dropdown-item dropdown-warning" (click)="clearResponses(card.id!); closeMenu()">
                 <span class="dropdown-icon">↺</span>

@@ -97,8 +97,7 @@ export class CardEditor {
         await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsed));
       }
       
-      await this.router.navigate(['/invite', id]);
-      // Loading permanece visível até aqui
+      await this.router.navigate(['/dashboard']);
     } catch (error) {
       console.error('Erro ao salvar cartão:', error);
       alert('Erro ao salvar cartão. Tente novamente.');
@@ -129,8 +128,7 @@ export class CardEditor {
         await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsed));
       }
       
-      await this.router.navigate(['/invite', id]);
-      // Loading permanece visível até aqui
+      await this.router.navigate(['/dashboard']);
     } catch (error) {
       console.error('Erro ao salvar cartão:', error);
       alert('Erro ao salvar cartão. Tente novamente.');

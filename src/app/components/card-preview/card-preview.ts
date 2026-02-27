@@ -52,6 +52,7 @@ export class CardPreview implements OnInit {
   challengeUnlocked = signal(true);
   requiredChallengeGame = signal<ChallengeGameId | null>(null);
   challengeCompleted = signal(false);
+  rsvpConfirmed = signal(false);
   activeChallenge = signal<ChallengeGameId | null>(null);
   challengePrompt = signal('');
   challengeDisplay = signal('');
@@ -281,8 +282,10 @@ export class CardPreview implements OnInit {
       // Se é um convidado individual, registrar via GuestService
       if (currentGuest?.id && currentGuest?.token) {
         this.guestService.recordResponse(currentGuest.id, response, currentGuest.token).then(() => {
+          this.rsvpConfirmed.set(true);
           this.showSuccessMessage();
         }).catch(error => {
+          if (lsKey) localStorage.removeItem(lsKey);
           this.errorMessage.set('Erro: ' + (error.message || 'Não foi possível registrar sua resposta'));
           this.tokenValid.set(false);
         });
@@ -293,8 +296,10 @@ export class CardPreview implements OnInit {
           cardId: cardData.id,
           response,
         }).then(() => {
+          this.rsvpConfirmed.set(true);
           this.showSuccessMessage();
         }).catch(error => {
+          if (lsKey) localStorage.removeItem(lsKey);
           this.errorMessage.set('Erro: ' + (error.message || 'Não foi possível registrar sua resposta'));
           this.tokenValid.set(false);
         });
@@ -305,9 +310,10 @@ export class CardPreview implements OnInit {
           cardId: cardData.id,
           response,
         }).then(() => {
+          this.rsvpConfirmed.set(true);
           this.showSuccessMessage();
         }).catch(error => {
-          // Se falhou e não é duplicata, remover o bloqueio
+          // Se falhou, remover o bloqueio e mostrar erro
           if (lsKey) localStorage.removeItem(lsKey);
           alert('Erro ao registrar sua resposta. Tente novamente.');
         });

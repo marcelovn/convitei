@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, effect, input, output, signal, viewChild } from '@angular/core';
 import { Card } from '../../models/card.model';
 
 @Component({
@@ -11,6 +11,7 @@ export class NoButtonMechanics {
   mechanic = input<Card['noButtonMechanic']>('teleporting');
   responded = output<'yes' | 'no'>();
   disabled = input(false);
+  responseConfirmed = input(false);
 
   buttonsContainer = viewChild<ElementRef>('buttonsContainer');
 
@@ -23,10 +24,17 @@ export class NoButtonMechanics {
   hasResponded = signal(false);
   showConfetti = signal(false);
 
+  constructor() {
+    effect(() => {
+      if (this.responseConfirmed()) {
+        this.hasResponded.set(true);
+        this.showConfetti.set(true);
+      }
+    });
+  }
+
   onYesClick(): void {
     if (this.disabled()) return;
-    this.hasResponded.set(true);
-    this.showConfetti.set(true);
     this.responded.emit('yes');
   }
 

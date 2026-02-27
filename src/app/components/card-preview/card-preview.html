@@ -139,6 +139,7 @@
           <app-no-button-mechanics
             [mechanic]="cardData.noButtonMechanic"
             [disabled]="!tokenValid() || isChallengeLocked() || requiresIndividualToken()"
+            [responseConfirmed]="rsvpConfirmed()"
             (responded)="onResponse($event)" />
         </div>
       </div>

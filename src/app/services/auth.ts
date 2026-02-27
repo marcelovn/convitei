@@ -11,10 +11,15 @@ export class AuthService {
   isLoading = signal(false);
   isAuthenticated = signal(false);
 
+  /** Resolve quando a verificação inicial de sessão termina (sucesso ou não). */
+  readonly authReady: Promise<void>;
+  private resolveAuthReady!: () => void;
+
   constructor(
     private supabaseService: SupabaseService,
     private router: Router
   ) {
+    this.authReady = new Promise(resolve => { this.resolveAuthReady = resolve; });
     this.initAuth();
   }
 
@@ -28,6 +33,7 @@ export class AuthService {
       } else {
         this.displayName.set(null);
       }
+      this.resolveAuthReady();
     });
 
     // Escutar mudanças de autenticação
