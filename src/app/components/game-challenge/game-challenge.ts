@@ -5,6 +5,8 @@ import {
   EventEmitter,
   OnDestroy,
   AfterViewInit,
+  OnChanges,
+  SimpleChanges,
   ViewChild,
   ElementRef,
   signal,
@@ -20,7 +22,7 @@ export type GameChallengeId = 'snake' | 'space-shooter';
   templateUrl: './game-challenge.html',
   styleUrl: './game-challenge.scss',
 })
-export class GameChallengeComponent implements AfterViewInit, OnDestroy {
+export class GameChallengeComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() gameId: GameChallengeId = 'snake';
   @Input() photoUrl: string | null = null;
   @Output() gamePassed = new EventEmitter<void>();
@@ -61,6 +63,12 @@ export class GameChallengeComponent implements AfterViewInit, OnDestroy {
   private shootCooldown = 0;
   private enemySpawnTimer = 0;
   private readonly ENEMY_SPAWN_INTERVAL = 1.5;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['photoUrl'] && this.ctx && this.status() === 'idle') {
+      this.loadPlayerImg(() => this.drawIdle());
+    }
+  }
 
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
@@ -503,14 +511,23 @@ export class GameChallengeComponent implements AfterViewInit, OnDestroy {
       cb();
       return;
     }
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      this.playerImg = img;
-      cb();
+    const tryLoad = (withCors: boolean) => {
+      const img = new Image();
+      if (withCors) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        this.playerImg = img;
+        cb();
+      };
+      img.onerror = () => {
+        if (withCors) {
+          tryLoad(false); // fallback sem CORS
+        } else {
+          cb();
+        }
+      };
+      img.src = this.photoUrl!;
     };
-    img.onerror = () => cb();
-    img.src = this.photoUrl;
+    tryLoad(true);
   }
 
   // ── keyboard ──────────────────────────────────────────────────────────────

@@ -15,11 +15,9 @@
     </div>
   } @else if (card(); as cardData) {
     <div class="invite-card"
-         [class.has-photo]="cardData.photoUrl"
          [style.font-family]="themeFont() + ', sans-serif'"
-         [style.background-color]="themeBgColor()"
-         [style.color]="schemeText()"
-         [style.background-image]="cardData.photoUrl ? 'url(' + cardData.photoUrl + ')' : 'none'">
+         [style.background]="themeBgColor()"
+         [style.color]="schemeText()">
 
       @if (authService.isAuthenticated()) {
         <button class="back-btn" (click)="goBack()">

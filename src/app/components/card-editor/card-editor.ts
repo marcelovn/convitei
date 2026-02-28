@@ -30,6 +30,9 @@ export class CardEditor {
   mechanics = NO_BUTTON_MECHANICS;
   challengeOptions = CHALLENGE_GAME_OPTIONS;
   currentStep = signal(1);
+  photoUrl = signal<string | null>(null);
+  photoPreview = signal<string | null>(null);
+  isUploadingPhoto = signal(false);
 
   readonly FLOATING_EMOJIS = [
     { emoji: '', label: 'Nenhum' },
@@ -136,6 +139,32 @@ export class CardEditor {
     }
   }
 
+  async onPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => this.photoPreview.set(e.target?.result as string);
+    reader.readAsDataURL(file);
+
+    try {
+      this.isUploadingPhoto.set(true);
+      const url = await this.cardService.uploadFile(file, 'photos');
+      this.photoUrl.set(url);
+    } catch {
+      alert('Erro ao fazer upload da foto. Tente novamente.');
+      this.photoPreview.set(null);
+    } finally {
+      this.isUploadingPhoto.set(false);
+    }
+  }
+
+  removePhoto(): void {
+    this.photoUrl.set(null);
+    this.photoPreview.set(null);
+  }
+
   toggleChallengeMode(): void {
     this.challengeModeEnabled.update(value => !value);
 
@@ -164,6 +193,7 @@ export class CardEditor {
       challengeModeEnabled: this.challengeModeEnabled(),
       challengeGame: this.selectedChallengeGame() ?? undefined,
       floatingEmoji: this.selectedEmoji(),
+      photoUrl: this.photoUrl() ?? undefined,
     };
   }
 }
