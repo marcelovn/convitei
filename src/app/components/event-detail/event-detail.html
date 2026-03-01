@@ -42,7 +42,6 @@
       </div>
       <div class="event-header-actions">
         <button class="btn btn-ghost" (click)="editEvent()">Editar evento</button>
-        <button class="btn btn-ghost btn-danger-ghost" (click)="deleteEvent()">Excluir</button>
       </div>
     </header>
 
@@ -71,7 +70,7 @@
         }
         @if (ev.budgetTotal) {
           <div class="detail-item">
-            <span class="detail-icon">💰</span>
+            <span class="detail-icon">🎯</span>
             <div>
               <span class="detail-label">Orçamento</span>
               <span class="detail-value">R$ {{ ev.budgetTotal | number:'1.2-2' }}</span>
@@ -174,8 +173,8 @@
     <div class="accordion-section card-base">
       <button class="accordion-header" (click)="toggleSection('finance')">
         <span class="acc-left">
-          <span class="acc-icon">💰</span>
-          <span class="acc-title">Financeiro</span>
+          <span class="acc-icon">💸</span>
+          <span class="acc-title">Gastos</span>
         </span>
         <span class="acc-arrow">{{ openSection() === 'finance' ? '▲' : '▼' }}</span>
       </button>
@@ -218,11 +217,16 @@
 
         @if (openSection() === 'cat-' + cat.id) {
           <div class="accordion-body">
-            @if (getNotesLines(cat.notes).length > 0) {
+            @if (getNoteItems(cat.notes).length > 0) {
               <ul class="notes-list">
-                @for (line of getNotesLines(cat.notes); track $index; let i = $index) {
-                  <li class="notes-list-item">
-                    <span>{{ line }}</span>
+                @for (item of getNoteItems(cat.notes); track $index; let i = $index) {
+                  <li class="notes-list-item" [class.done]="item.done">
+                    <input
+                      type="checkbox"
+                      class="notes-checkbox"
+                      [checked]="item.done"
+                      (change)="toggleNoteItem(cat, i)" />
+                    <span>{{ item.text }}</span>
                     <button class="btn-icon-sm btn-danger" (click)="removeNoteItem(cat, i)" title="Remover">✕</button>
                   </li>
                 }
@@ -271,6 +275,10 @@
           + Adicionar seção
         </button>
       }
+    </div>
+
+    <div class="danger-zone">
+      <button class="btn-danger-link" (click)="deleteEvent()">Excluir evento</button>
     </div>
 
   } @else {

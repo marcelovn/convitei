@@ -34,6 +34,11 @@ export interface EventExpense {
   createdAt?: Date;
 }
 
+export interface NoteItem {
+  text: string;
+  done: boolean;
+}
+
 export interface EventCategory {
   id?: string;
   eventId: string;

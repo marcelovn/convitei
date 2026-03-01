@@ -8,7 +8,7 @@ import { InviteTokenService } from '../../services/invite-token';
 import { CardService } from '../../services/card';
 import { GuestService } from '../../services/guest.service';
 import { RsvpService } from '../../services/rsvp';
-import { AppEvent, EventCategory, EVENT_TYPE_LABELS } from '../../models/event.model';
+import { AppEvent, EventCategory, NoteItem, EVENT_TYPE_LABELS } from '../../models/event.model';
 import { Card } from '../../models/card.model';
 import { COLOR_SCHEMES } from '../../models/constants';
 import { GuestsManager } from '../guests-manager/guests-manager';
@@ -53,23 +53,42 @@ export class EventDetailComponent implements OnInit {
     this.newItemDraft.update(d => ({ ...d, [catId]: value }));
   }
 
-  getNotesLines(notes: string | undefined): string[] {
-    return (notes ?? '').split('\n').filter(l => l.trim().length > 0);
+  getNoteItems(notes: string | undefined): NoteItem[] {
+    const raw = notes ?? '';
+    if (raw.trimStart().startsWith('[')) {
+      try {
+        return JSON.parse(raw) as NoteItem[];
+      } catch {
+        // fall through to legacy format
+      }
+    }
+    // Legacy format: plain text lines
+    return raw.split('\n').filter(l => l.trim().length > 0).map(text => ({ text, done: false }));
+  }
+
+  private serializeItems(items: NoteItem[]): string {
+    return JSON.stringify(items);
   }
 
   async addNoteItem(cat: EventCategory): Promise<void> {
     const text = this.getNewItemDraft(cat.id!).trim();
     if (!text) return;
-    const lines = this.getNotesLines(cat.notes);
-    lines.push(text);
-    await this.updateCategoryNotes(cat, lines.join('\n'));
+    const items = this.getNoteItems(cat.notes);
+    items.push({ text, done: false });
+    await this.updateCategoryNotes(cat, this.serializeItems(items));
     this.setNewItemDraft(cat.id!, '');
   }
 
   async removeNoteItem(cat: EventCategory, index: number): Promise<void> {
-    const lines = this.getNotesLines(cat.notes);
-    lines.splice(index, 1);
-    await this.updateCategoryNotes(cat, lines.join('\n'));
+    const items = this.getNoteItems(cat.notes);
+    items.splice(index, 1);
+    await this.updateCategoryNotes(cat, this.serializeItems(items));
+  }
+
+  async toggleNoteItem(cat: EventCategory, index: number): Promise<void> {
+    const items = this.getNoteItems(cat.notes);
+    items[index] = { ...items[index], done: !items[index].done };
+    await this.updateCategoryNotes(cat, this.serializeItems(items));
   }
 
   // Open sections

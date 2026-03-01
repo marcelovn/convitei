@@ -397,17 +397,47 @@
   color: var(--text-primary, #1a1a2e);
   line-height: 1.5;
 
-  &::before {
-    content: '•';
-    color: var(--primary, #667eea);
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-
   span { flex: 1; }
 
   &:hover {
     background: var(--bg-secondary, #f9fafb);
+  }
+
+  &.done {
+    span {
+      text-decoration: line-through;
+      opacity: 0.45;
+    }
+  }
+}
+
+.notes-checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary, #667eea);
+  cursor: pointer;
+}
+
+.danger-zone {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color, #f3f4f6);
+  text-align: center;
+}
+
+.btn-danger-link {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0.55;
+  padding: 0.5rem;
+
+  &:hover {
+    opacity: 1;
+    text-decoration: underline;
   }
 }
 
