@@ -761,7 +761,7 @@
 .categories-list {
   display: flex;
   flex-direction: column;
-  gap: 0; // keep same visual gap as before (card-base already has margin via parent gap)
+  gap: 1rem;
 }
 
 .cdk-drag-preview {
