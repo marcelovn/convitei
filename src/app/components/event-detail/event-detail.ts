@@ -25,19 +25,23 @@ const TUTORIAL_STEPS = [
   },
   {
     title: 'Convite digital',
-    text: 'Crie um convite personalizado com tema e cores. Depois compartilhe por WhatsApp ou link direto. Acompanhe as confirmações em tempo real.',
+    text: 'Crie um convite personalizado com tema, cores e mecânicas divertidas (botão "Não" que foge, desafios antes do RSVP). Compartilhe por WhatsApp ou link direto.',
   },
   {
     title: 'Lista de convidados',
-    text: 'Adicione convidados individualmente ou importe uma lista. Envie convites personalizados pelo WhatsApp e veja quem confirmou, está pendente ou recusou.',
+    text: 'Adicione convidados individualmente ou importe uma lista no formato "Nome, Telefone". Acompanhe o funil: Adicionados → Enviados → Visualizados → Confirmados.',
+  },
+  {
+    title: 'Exportar convidados',
+    text: 'Na seção Convidados, clique em "CSV" para baixar a lista completa com nome, telefone, status, data de confirmação e número de acompanhantes.',
   },
   {
     title: 'Controle financeiro',
-    text: 'Registre gastos por categoria, defina datas de vencimento e acompanhe o saldo. Registre também entradas e presentes recebidos.',
+    text: 'Registre gastos por categoria com datas de vencimento e fornecedores. Registre entradas e presentes. O painel mostra Comprometido, Pago, Pendente e o Saldo líquido automaticamente.',
   },
   {
     title: 'Seções personalizadas',
-    text: 'Crie listas de tarefas para qualquer aspecto do evento — cardápio, decoração, compras, programação. Marque os itens conforme avança na organização.',
+    text: 'Crie listas de tarefas para cardápio, decoração, compras, programação… Reordene arrastando as seções com o mouse ou usando os botões ▲▼. Marque os itens conforme avança.',
   },
 ];
 
